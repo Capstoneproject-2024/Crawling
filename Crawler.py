@@ -4,24 +4,47 @@ from selenium.webdriver.common.keys import Keys
 import time
 class Crawl:
     url = "https://pedia.watcha.com/ko-KR/?domain=book"
-    def __init__(self, keyword):
+    def __init__(self):
         self.element = Element()
+
+    def kill(self):
+        time.sleep(2)  # 잠시 대기
+        self.element.quit()
+    
+    def set(self, keyword, year):
+        self.year = year
         self.element.url(self.url)
         self.search_keyword = keyword
 
+
     def find_book(self):
-        l = self.element.find_all(css_class = "bf517d4e5ad926d3a46d")
+        try:
+            l = self.element.find_all(css_class = "bf517d4e5ad926d3a46d")
+        except Exception as e:
+            print()
+        finally:
+            return []
+       
+
         for i in l:
             instance = i.find(css_class="b110f80385f63f81d7fe a0e21d46e180cf46b3ed")
             if instance.text() == "책":
                 return i.find_all(css_class = "c1fbb66dd0a8919a619b ef9348f4092a69aeb892")
+        return []
     
     def find_book_desc(self, url):
         desc_url = url + "/book_description"
         try:
             self.element.url(desc_url)
             t = self.element.find(css_class="d564474639d6d5b3ee56 f7d70d844d2e8db2758a ab3dccafc9ad33c8e788")
-            return t.text()
+            if t.text().strip() !="":
+                return t.text()
+            try:
+                self.element.url(url)
+                tt = self.element.find(css_class="cbf385a8dfd716be802c")
+                return tt.text().strip()
+            except Exception as e:
+                print("오류 발생 : ", e)
         except Exception as e:
             print("오류 발생:", e)
 
@@ -32,7 +55,7 @@ class Crawl:
                 element_button.click()
 
             except Exception as e:
-                print("오류발생: ",e)
+                print("오류 발생: ",e)
 
         try:
             element_instance = self.element.find(css_class = "c8163d6897c44e00a656" )
@@ -41,13 +64,20 @@ class Crawl:
             input_field.send_keys(self.search_keyword)
             input_field.send_keys(Keys.RETURN)
             books = self.find_book()
-            books[0].click()
+            if len(books)==0:
+                print("aa")
+                return "no"
+            for book in books:
+                field = book.find(css_class = "b0eed3ac8259acd0f04b cbf385a8dfd716be802c").text()[0:4]
+                if field == self.year: 
+                    book.click()
+                    break
             return self.find_book_desc(self.element.get_current_url())
         except Exception as e:
             print("오류 발생:", e)
         finally:
+            print()
         # 드라이버 종료
-            time.sleep(2)  # 잠시 대기
-            self.element.quit()
+            
 
 
