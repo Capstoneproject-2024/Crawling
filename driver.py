@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 import time
 
@@ -237,12 +238,17 @@ class Element:
 
         path = raw if raw else "descendant::" + condition(tag, **kwargs)
 
-        wait.until(EC.presence_of_all_elements_located((By.XPATH, path)))
 
-        return [
-            Element(element)
-            for element in self.current_element.find_elements(By.XPATH, path)
-        ]
+        try:
+            
+            element = WebDriverWait(driver, 1).until(EC.presence_of_all_elements_located((By.XPATH, path)))
+            return [
+                Element(element)
+                for element in self.current_element.find_elements(By.XPATH, path)
+            ]
+
+        except Exception:
+            raise Exception
 
     def parent(self, times=1):
         path = "/".join([".."] * times)
